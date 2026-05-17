@@ -22,6 +22,8 @@ jobs:
       - run: make test
 
       - run: make docker_push 
+      
+      - run: make docker_build
 
 workflows:
 
