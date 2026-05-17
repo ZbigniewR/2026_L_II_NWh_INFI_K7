@@ -1,28 +1,20 @@
+import unittest
 from hello_world import app
-from hello_world.formater import get_formatted
-from hello_world.formater import SUPPORTED, PLAIN
-from flask import request, jsonify  # Dodaliśmy jsonify tutaj
+from hello_world.formater import SUPPORTED
 
-moje_imie = "Zbigniew"
-msg = "Hello World!"
+class FlaskrTestCase(unittest.TestCase):
+    def setUp(self):
+        app.config['TESTING'] = True
+        self.app = app.test_client()
 
+    def test_outputs(self):
+        rv = self.app.get('/outputs')
+        # Używamy .decode('utf-8'), aby ładnie zamienić bajty na zwykły tekst
+        s = rv.data.decode('utf-8')
+        # Dodajemy spację po przecinku ', ', aby pasowało do kodu aplikacji
+        self.assertTrue(', '.join(SUPPORTED) in s)
 
-@app.route('/')
-def index():
-    output = request.args.get('output')
-
-    # Obsługa formatu JSON bezpośrednio, aby trafić w oczekiwania testu
-    if output == 'json':
-        # UWAGA: w teście jest literówka "mgs" zamiast "msg"!
-        return jsonify(imie=moje_imie, mgs=msg)
-
-    if not output:
-        output = PLAIN
-
-    return get_formatted(msg, moje_imie,
-                         output.lower())
-
-
-@app.route('/outputs')
-def supported_output():
-    return ", ".join(SUPPORTED)
+    def test_msg_with_output(self):
+        rv = self.app.get('/?output=json')
+        # Usuwamy wewnętrzne spacje i dodajemy \n na końcu stringa bajtowego
+        self.assertEqual(b'{"imie":"Zbigniew","mgs":"Hello World!"}\n', rv.data)
